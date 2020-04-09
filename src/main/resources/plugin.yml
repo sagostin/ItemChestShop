@@ -1,0 +1,6 @@
+name: ItemChestShop
+version: 0.0.1
+main: xyz.dec0de.itemchestshop.Main
+website: https://dec0de.xyz
+description: Item Shop using Signs
+authors: [Nyarrth]
