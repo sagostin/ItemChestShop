@@ -32,16 +32,17 @@ public class ShopEvents implements Listener {
                 if (sign.getLine(0).equalsIgnoreCase("[Shop]")) {
                     String forSaleItemName = sign.getLine(1);
                     String costItemName = sign.getLine(3);
+
+                    Material forSaleItem = Material.valueOf(forSaleItemName.toUpperCase());
+                    Material costItem = Material.valueOf(costItemName.toUpperCase());
+
                     //Check if items are valid material
-                    if (validMaterial(forSaleItemName) != null && validMaterial(costItemName) != null) {
+                    if (forSaleItem != null && costItem != null) {
                         try {
                             String[] costs = sign.getLine(2).split(":");
                             // Convert to separate values
                             int forSaleAmount = Integer.parseInt(costs[0]);
-                            Material forSaleItem = validMaterial(forSaleItemName);
-
                             int costAmount = Integer.parseInt(costs[1]);
-                            Material costItem = validMaterial(costItemName);
 
                             if (costAmount >= 1 && forSaleAmount >= 1)
                                 // Get chest attached to sign
@@ -162,14 +163,5 @@ public class ShopEvents implements Listener {
             }
         }
 
-    }
-
-    private static Material validMaterial(String material){
-        for (Material m : Material.values()) {
-            if (m.toString().equalsIgnoreCase(material))
-                return m;
-        }
-
-        return null;
     }
 }
