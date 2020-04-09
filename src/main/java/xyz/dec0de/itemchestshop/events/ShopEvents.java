@@ -25,23 +25,24 @@ public class ShopEvents implements Listener {
     public void onSignRightClick(PlayerInteractEvent event) {
         if (event.getHand() == EquipmentSlot.HAND) {
             Block block = event.getClickedBlock();
+            if(block != null)
             if (block.getType().toString().contains("SIGN")) {
                 Sign sign = (Sign) block.getState();
 
                 // Read sign
                 if (sign.getLine(0).equalsIgnoreCase("[Shop]")) {
-                    String[] forSale = sign.getLine(1).split(":");
-                    String[] cost = sign.getLine(2).split(":");
-
+                    String forSaleItemName = sign.getLine(1);
+                    String costItemName = sign.getLine(3);
                     //Check if items are valid material
-                    if (Material.valueOf(forSale[0].toUpperCase()) != null && Material.valueOf(cost[0].toUpperCase()) != null) {
+                    if (validMaterial(forSaleItemName) != null && validMaterial(costItemName) != null) {
                         try {
+                            String[] costs = sign.getLine(2).split(":");
                             // Convert to separate values
-                            int forSaleAmount = Integer.parseInt(forSale[1]);
-                            Material forSaleItem = Material.valueOf(forSale[0].toUpperCase());
+                            int forSaleAmount = Integer.parseInt(costs[0]);
+                            Material forSaleItem = validMaterial(forSaleItemName);
 
-                            int costAmount = Integer.parseInt(cost[1]);
-                            Material costItem = Material.valueOf(cost[0].toUpperCase());
+                            int costAmount = Integer.parseInt(costs[1]);
+                            Material costItem = validMaterial(costItemName);
 
                             // Get chest attached to sign
                             for (BlockFace f : (new BlockFace[]{BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST})) {
@@ -161,5 +162,14 @@ public class ShopEvents implements Listener {
             }
         }
 
+    }
+
+    private static Material validMaterial(String material){
+        for (Material m : Material.values()) {
+            if (m.toString().equalsIgnoreCase(material))
+                return m;
+        }
+
+        return null;
     }
 }
