@@ -57,15 +57,15 @@ public class ShopEvents implements Listener {
                                         Inventory playerInventory = player.getInventory();
 
                                         // Check if player has enough for the cost
-                                        if (playerInventory.containsAtLeast(new ItemStack(costItem), costAmount)) {
+                                        if (inventoryContains(playerInventory, costItem, costAmount)) {
 
                                             // Check if the chest has enough to sell
-                                            if (chestInventory.containsAtLeast(new ItemStack(forSaleItem), forSaleAmount)) {
+                                            if (inventoryContains(chestInventory, forSaleItem, forSaleAmount)) {
 
                                                 // A horrible thing
                                                 List<ItemStack> chestList = new ArrayList<>();
-                                                for(ItemStack itemStackFor : chestInventory.getContents()){
-                                                    if(itemStackFor != null)
+                                                for (ItemStack itemStackFor : chestInventory.getContents()) {
+                                                    if (itemStackFor != null)
                                                         chestList.add(itemStackFor);
                                                 }
                                                 ItemStack[] chestContents = chestList.toArray(new ItemStack[chestList.size()]);
@@ -90,6 +90,7 @@ public class ShopEvents implements Listener {
 
                                                                     // Give player item
                                                                     if (playerInventory.firstEmpty() != -1) {
+
                                                                         // Remove forSale from Chest
                                                                         if (i.getAmount() == forSaleAmount) {
                                                                             chestInventory.setItem(chestInventory.first(i), new ItemStack(Material.AIR));
@@ -106,12 +107,11 @@ public class ShopEvents implements Listener {
 
                                                                         // Add cost to chest inventory
                                                                         chestInventory.addItem(new ItemStack(costItem, costAmount));
-                                                                        //chest.update();
 
                                                                         // Add forSale to player inventory
-                                                                        playerInventory.addItem(new ItemStack(forSaleItem, forSaleAmount));
-                                                                        player.updateInventory();
+                                                                        playerInventory.addItem(i);
 
+                                                                        player.updateInventory();
                                                                         player.sendMessage(
                                                                                 ChatColor.translateAlternateColorCodes('&',
                                                                                         "&aThank you for your business. Come again."));
@@ -163,5 +163,21 @@ public class ShopEvents implements Listener {
             }
         }
 
+    }
+
+    public boolean inventoryContains(Inventory inventory, Material material, int amount) {
+        List<ItemStack> itemStacks = new ArrayList<>();
+        for (ItemStack itemStackFor : inventory.getContents()) {
+            if (itemStackFor != null)
+                itemStacks.add(itemStackFor);
+        }
+        ItemStack[] inventoryContents = itemStacks.toArray(new ItemStack[itemStacks.size()]);
+
+        for (ItemStack items : inventoryContents) {
+            if (items.getType() == material && items.getAmount() >= amount) {
+                return true;
+            }
+        }
+        return false;
     }
 }
