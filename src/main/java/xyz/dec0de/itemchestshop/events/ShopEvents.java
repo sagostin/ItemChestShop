@@ -92,24 +92,27 @@ public class ShopEvents implements Listener {
                                                                     if (playerInventory.firstEmpty() != -1) {
 
                                                                         // Remove forSale from Chest
-                                                                        if (i.getAmount() == forSaleAmount) {
-                                                                            chestInventory.setItem(chestInventory.first(i), new ItemStack(Material.AIR));
-                                                                        } else {
+                                                                        if (i.getAmount() > forSaleAmount) {
                                                                             i.setAmount(i.getAmount() - forSaleAmount);
+                                                                        } else {
+                                                                            chestInventory.setItem(chestInventory.first(i), new ItemStack(Material.AIR));
                                                                         }
 
                                                                         // Remove cost from player inventory
-                                                                        if (is.getAmount() == costAmount) {
-                                                                            playerInventory.setItem(playerInventory.first(i), new ItemStack(Material.AIR));
-                                                                        } else {
+                                                                        if (is.getAmount() > costAmount) {
                                                                             is.setAmount(is.getAmount() - costAmount);
+                                                                        } else {
+                                                                            playerInventory.setItem(playerInventory.first(is), new ItemStack(Material.AIR));
                                                                         }
 
                                                                         // Add cost to chest inventory
                                                                         chestInventory.addItem(new ItemStack(costItem, costAmount));
 
                                                                         // Add forSale to player inventory
-                                                                        playerInventory.addItem(i);
+                                                                        ItemStack newItem = i.clone();
+                                                                        newItem.setAmount(forSaleAmount);
+
+                                                                        playerInventory.addItem(newItem);
 
                                                                         player.updateInventory();
                                                                         player.sendMessage(
