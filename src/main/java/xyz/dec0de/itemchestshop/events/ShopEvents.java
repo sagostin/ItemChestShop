@@ -31,14 +31,14 @@ public class ShopEvents implements Listener {
 
         if (!e.getLine(0).equalsIgnoreCase("[Shop]")) return;
         if (!e.getLine(2).contains(":") && e.getLine(2).split(":").length == 2) {
-            player.sendMessage(ChatColor.RED + "The sign is formatted incorrectly. 2");
+            player.sendMessage(ChatColor.RED + "The sign is formatted incorrectly.");
             return;
         }
 
         String[] counts = e.getLine(2).split(":");
         // Convert to separate values
         if (!NumberUtils.isParsable(counts[0]) || !NumberUtils.isParsable(counts[1])) {
-            player.sendMessage(ChatColor.RED + "The sign is formatted incorrectly. 1");
+            player.sendMessage(ChatColor.RED + "The sign is formatted incorrectly.");
             return;
         }
 
