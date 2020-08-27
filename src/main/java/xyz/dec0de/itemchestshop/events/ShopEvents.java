@@ -137,6 +137,9 @@ public class ShopEvents implements Listener {
             player.sendMessage(ChatColor.GREEN +
                     "You have set the shop to use " + itemName +
                     ChatColor.GREEN + " as the currency.");
+            player.sendMessage(ChatColor.GREEN +
+                    "" + ChatColor.BOLD + "" +
+                    "Shop has been created!");
             e.setCancelled(true);
             return;
         }
