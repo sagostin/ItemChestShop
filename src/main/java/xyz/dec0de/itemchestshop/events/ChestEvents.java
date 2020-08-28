@@ -18,6 +18,7 @@ public class ChestEvents implements Listener {
         if (e.getBlock().getType() == Material.CHEST) {
             if (ChestUtils.blockShopSign(e.getBlock())) {
                 Player player = e.getPlayer();
+                if (player.isOp()) return;
                 player.sendMessage(ChatColor.RED + "You cannot break a shop's chest without breaking the sign first.");
                 e.setCancelled(true);
             }
@@ -31,6 +32,7 @@ public class ChestEvents implements Listener {
                 if (e.getAction() == Action.RIGHT_CLICK_BLOCK)
                     if (ChestUtils.blockShopSign(e.getClickedBlock())) {
                         Player player = e.getPlayer();
+                        if (player.isOp()) return;
                         ShopStorage shopStorage = ShopStorage.getShopStorageFromChest(e.getClickedBlock());
 
                         if (shopStorage.getOwner().equals(player.getUniqueId())) return;
