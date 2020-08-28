@@ -98,7 +98,7 @@ public class ShopEvents implements Listener {
             return;
         }
 
-        ItemStack itemInHand = player.getInventory().getItemInMainHand();
+        ItemStack itemInHand = player.getInventory().getItemInMainHand().clone();
         if (emptyMainHand(player)) return;
 
         String itemName = itemInHand.getItemMeta().hasDisplayName() ?
@@ -207,43 +207,53 @@ public class ShopEvents implements Listener {
         List<ItemStack> playerCurrency = new ArrayList<>();
         List<ItemStack> shopItems = new ArrayList<>();
 
-        int currencyAmount = 0;
+        int currencyAmount = shop.getCurrencyCount();
 
         Iterator<ItemStack> playerItems = playerInventory.iterator();
         while (playerItems.hasNext()) {
             ItemStack item = playerItems.next();
             if (item != null)
                 if (item.isSimilar(shop.getCurrencyItem())) {
-                    if (item.getAmount() <= (shop.getCurrencyCount() - currencyAmount)) {
-                        currencyAmount += item.getAmount();
+                    if (item.getAmount() <= currencyAmount) {
+                        currencyAmount -= item.getAmount();
                         playerCurrency.add(item.clone());
                         playerInventory.setItem(playerInventory.first(item), new ItemStack(Material.AIR));
-                    } else if (item.getAmount() > (shop.getCurrencyCount() - currencyAmount)) {
-                        currencyAmount += item.getAmount() - (shop.getCurrencyCount() - currencyAmount);
+                    } else if (item.getAmount() > currencyAmount) {
                         ItemStack modified = item.clone();
-                        modified.setAmount(item.getAmount() - (shop.getCurrencyCount() - currencyAmount));
-                        playerCurrency.add(modified.clone());
+                        modified.setAmount(item.getAmount() - currencyAmount);
+
+                        ItemStack itemToPut = item.clone();
+                        itemToPut.setAmount(currencyAmount);
+
+                        currencyAmount = 0;
+                        playerCurrency.add(itemToPut);
                         playerInventory.setItem(playerInventory.first(item), modified);
                     }
+
+                    player.updateInventory();
                 }
         }
 
-        int forSaleAmount = 0;
+        int forSaleAmount = shop.getItemCount();
 
         Iterator<ItemStack> chestItems = chestInventory.iterator();
         while (chestItems.hasNext()) {
             ItemStack item = chestItems.next();
             if (item != null)
                 if (item.isSimilar(shop.getForSaleItem())) {
-                    if (item.getAmount() <= (shop.getItemCount() - forSaleAmount)) {
-                        forSaleAmount += item.getAmount();
+                    if (item.getAmount() <= forSaleAmount) {
+                        forSaleAmount -= item.getAmount();
                         shopItems.add(item.clone());
                         chestInventory.setItem(chestInventory.first(item), new ItemStack(Material.AIR));
-                    } else if (item.getAmount() > (shop.getItemCount() - forSaleAmount)) {
-                        forSaleAmount += item.getAmount() - (shop.getItemCount() - forSaleAmount);
+                    } else if (item.getAmount() > forSaleAmount) {
                         ItemStack modified = item.clone();
-                        modified.setAmount(item.getAmount() - (shop.getItemCount() - forSaleAmount));
-                        shopItems.add(modified.clone());
+                        modified.setAmount(item.getAmount() - forSaleAmount);
+
+                        ItemStack itemToPut = item.clone();
+                        itemToPut.setAmount(forSaleAmount);
+
+                        forSaleAmount = 0;
+                        shopItems.add(itemToPut.clone());
                         chestInventory.setItem(chestInventory.first(item), modified);
                     }
                 }
@@ -255,11 +265,8 @@ public class ShopEvents implements Listener {
 
         for (ItemStack purchased : shopItems) {
             playerInventory.addItem(purchased);
+            player.updateInventory();
         }
-
-        player.updateInventory();
-        shop.getChest().update();
-
     }
 
     public boolean playerAndShopHaveRoom(Player player, ShopStorage shop) {

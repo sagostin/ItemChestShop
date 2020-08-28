@@ -26,17 +26,18 @@ public class ChestEvents implements Listener {
 
     @EventHandler
     public void chestOpen(PlayerInteractEvent e) {
-        if (e.getClickedBlock().getType() == Material.CHEST) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK)
-                if (ChestUtils.blockShopSign(e.getClickedBlock())) {
-                    Player player = e.getPlayer();
-                    ShopStorage shopStorage = ShopStorage.getShopStorageFromChest(e.getClickedBlock());
+        if (e.getClickedBlock() != null)
+            if (e.getClickedBlock().getType() == Material.CHEST) {
+                if (e.getAction() == Action.RIGHT_CLICK_BLOCK)
+                    if (ChestUtils.blockShopSign(e.getClickedBlock())) {
+                        Player player = e.getPlayer();
+                        ShopStorage shopStorage = ShopStorage.getShopStorageFromChest(e.getClickedBlock());
 
-                    if (shopStorage.getOwner().equals(player.getUniqueId())) return;
-                    player.sendMessage(ChatColor.RED + "You cannot open this chest if you do not own the shop.");
-                    e.setCancelled(true);
-                }
-        }
+                        if (shopStorage.getOwner().equals(player.getUniqueId())) return;
+                        player.sendMessage(ChatColor.RED + "You cannot open this chest if you do not own the shop.");
+                        e.setCancelled(true);
+                    }
+            }
 
     }
 }
