@@ -69,7 +69,7 @@ public class ShopEvents implements Listener {
         if (!ShopStorage.isShop(block.getLocation())) return;
 
         ShopStorage shopStorage = new ShopStorage(block.getLocation());
-        if (!shopStorage.getOwner().equals(player.getUniqueId())) {
+        if (!shopStorage.getOwner().equals(player.getUniqueId()) && !player.isOp()) {
             player.sendMessage(ChatColor.RED + "You cannot break shops you do not own.");
             e.setCancelled(true);
             return;
