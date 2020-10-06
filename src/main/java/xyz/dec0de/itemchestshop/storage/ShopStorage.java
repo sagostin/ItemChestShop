@@ -4,7 +4,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -140,9 +139,10 @@ public class ShopStorage {
         return false;
     }
 
-    public Chest getChest() {
+    public Block getBlock() {
         Location chestLocation = (Location) config.get("chest_location");
-        return (Chest) chestLocation.getBlock().getState();
+        Block block = chestLocation.getBlock();
+        return block;
     }
 
     public void removeShop() {

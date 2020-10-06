@@ -3,9 +3,8 @@ package xyz.dec0de.itemchestshop.utils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.Sign;
+import org.bukkit.block.*;
+import org.bukkit.inventory.Inventory;
 import xyz.dec0de.itemchestshop.storage.ShopStorage;
 
 import java.util.ArrayList;
@@ -35,10 +34,21 @@ public class ChestUtils {
     public static Location getChestLocation(Location signLocation) {
         for (BlockFace f : (new BlockFace[]{BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST})) {
             Block relativeBlock = signLocation.getBlock().getRelative(f);
-            if (relativeBlock.getType() == Material.CHEST) {
+            if (relativeBlock.getType() == Material.CHEST || relativeBlock.getType() == Material.BARREL) {
                 return relativeBlock.getLocation();
             }
         }
         return null;
+    }
+
+    public static Inventory getBlockInventory(Block block) {
+        Inventory inv = null;
+        if (block.getType() == Material.CHEST) {
+            inv = ((Chest) block.getState()).getInventory();
+        } else if (block.getType() == Material.BARREL) {
+            inv = ((Barrel) block.getState()).getInventory();
+        }
+
+        return inv;
     }
 }

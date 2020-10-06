@@ -15,7 +15,7 @@ public class ChestEvents implements Listener {
 
     @EventHandler
     public void chestBreak(BlockBreakEvent e) {
-        if (e.getBlock().getType() == Material.CHEST) {
+        if (e.getBlock().getType() == Material.CHEST || e.getBlock().getType() == Material.BARREL) {
             if (ChestUtils.blockShopSign(e.getBlock())) {
                 Player player = e.getPlayer();
                 player.sendMessage(ChatColor.RED + "You cannot break a shop's chest without breaking the sign first.");
@@ -27,7 +27,7 @@ public class ChestEvents implements Listener {
     @EventHandler
     public void chestOpen(PlayerInteractEvent e) {
         if (e.getClickedBlock() != null)
-            if (e.getClickedBlock().getType() == Material.CHEST) {
+            if (e.getClickedBlock().getType() == Material.CHEST || e.getClickedBlock().getType() == Material.BARREL) {
                 if (e.getAction() == Action.RIGHT_CLICK_BLOCK)
                     if (ChestUtils.blockShopSign(e.getClickedBlock())) {
                         Player player = e.getPlayer();

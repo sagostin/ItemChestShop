@@ -3,7 +3,6 @@ package xyz.dec0de.itemchestshop.events;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -201,7 +200,8 @@ public class ShopEvents implements Listener {
     }
 
     public void swapItems(Player player, ShopStorage shop) {
-        Inventory chestInventory = shop.getChest().getInventory();
+
+        Inventory chestInventory = ChestUtils.getBlockInventory(shop.getBlock());
         Inventory playerInventory = player.getInventory();
 
         List<ItemStack> playerCurrency = new ArrayList<>();
@@ -236,9 +236,7 @@ public class ShopEvents implements Listener {
 
         int forSaleAmount = shop.getItemCount();
 
-        Iterator<ItemStack> chestItems = chestInventory.iterator();
-        while (chestItems.hasNext()) {
-            ItemStack item = chestItems.next();
+        for (ItemStack item : chestInventory) {
             if (item != null)
                 if (item.isSimilar(shop.getForSaleItem())) {
                     if (item.getAmount() <= forSaleAmount) {
@@ -270,15 +268,14 @@ public class ShopEvents implements Listener {
     }
 
     public boolean playerAndShopHaveRoom(Player player, ShopStorage shop) {
-        Inventory chestInventory = shop.getChest().getInventory();
+        Inventory chestInventory = ChestUtils.getBlockInventory(shop.getBlock());
         Inventory playerInventory = player.getInventory();
 
         return chestInventory.firstEmpty() != -1 || playerInventory.firstEmpty() != -1;
     }
 
     private boolean hasEnoughForSale(ShopStorage shop) {
-        Chest chest = shop.getChest();
-        Inventory inventory = chest.getInventory();
+        Inventory inventory = ChestUtils.getBlockInventory(shop.getBlock());
         int forSaleAmount = 0;
         List<ItemStack> itemList = new ArrayList<>();
         for (ItemStack itemStack : inventory.getContents()) {
