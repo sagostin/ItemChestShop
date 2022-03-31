@@ -3,189 +3,321 @@ package xyz.dec0de.itemchestshop.events;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import xyz.dec0de.itemchestshop.storage.ShopStorage;
+import xyz.dec0de.itemchestshop.utils.ChestUtils;
+import xyz.dec0de.itemchestshop.utils.NumberUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class ShopEvents implements Listener {
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onSignRightClick(PlayerInteractEvent event) {
-        if (event.getHand() == EquipmentSlot.HAND) {
-            Block block = event.getClickedBlock();
-            if(block != null)
-            if (block.getType().toString().contains("SIGN")) {
-                Sign sign = (Sign) block.getState();
+    @EventHandler
+    public void shopCreate(SignChangeEvent e) throws IOException {
+        Player player = e.getPlayer();
 
-                if (event.getAction() == Action.RIGHT_CLICK_BLOCK)
-
-                    // Read sign
-                    if (sign.getLine(0).equalsIgnoreCase("[Shop]")) {
-                        if (!event.getPlayer().isSneaking()) {
-                            String forSaleItemName = sign.getLine(1);
-                            String costItemName = sign.getLine(3);
-
-                            Material forSaleItem = Material.valueOf(forSaleItemName.toUpperCase());
-                            Material costItem = Material.valueOf(costItemName.toUpperCase());
-
-                            //Check if items are valid material
-                            if (forSaleItem != null && costItem != null) {
-                                try {
-                                    String[] costs = sign.getLine(2).split(":");
-                                    // Convert to separate values
-                                    int forSaleAmount = Integer.parseInt(costs[0]);
-                                    int costAmount = Integer.parseInt(costs[1]);
-
-                                    if (costAmount >= 1 && forSaleAmount >= 1)
-                                        // Get chest attached to sign
-                                        for (BlockFace f : (new BlockFace[]{BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST})) {
-                                            Block relativeBlock = block.getRelative(f);
-                                            if (relativeBlock.getType() == Material.CHEST) {
-                                                Chest chest = (Chest) relativeBlock.getState();
-
-                                                Inventory chestInventory = chest.getInventory();
-
-                                                Player player = event.getPlayer();
-                                                Inventory playerInventory = player.getInventory();
-
-                                                // Check if player has enough for the cost
-                                                if (inventoryContains(playerInventory, costItem, costAmount)) {
-
-                                                    // Check if the chest has enough to sell
-                                                    if (inventoryContains(chestInventory, forSaleItem, forSaleAmount)) {
-
-                                                        // A horrible thing
-                                                        List<ItemStack> chestList = new ArrayList<>();
-                                                        for (ItemStack itemStackFor : chestInventory.getContents()) {
-                                                            if (itemStackFor != null)
-                                                                chestList.add(itemStackFor);
-                                                        }
-                                                        ItemStack[] chestContents = chestList.toArray(new ItemStack[chestList.size()]);
-
-                                                        // Check chest for items to be removed
-                                                        for (ItemStack i : chestContents) {
-                                                            if (i.getType() == forSaleItem && i.getAmount() >= forSaleAmount) {
-                                                                // Check if chest has room for shop
-                                                                if (chestInventory.firstEmpty() != -1) {
-
-                                                                    // A horrible thing
-                                                                    List<ItemStack> playerList = new ArrayList<>();
-                                                                    for (ItemStack itemStackFor : playerInventory.getContents()) {
-                                                                        if (itemStackFor != null)
-                                                                            playerList.add(itemStackFor);
-                                                                    }
-                                                                    ItemStack[] playerContents = playerList.toArray(new ItemStack[playerList.size()]);
-
-                                                                    // Check player inventory for items to be removed
-                                                                    for (ItemStack is : playerContents) {
-                                                                        if (is.getType() == costItem && is.getAmount() >= costAmount) {
-
-                                                                            // Give player item
-                                                                            if (playerInventory.firstEmpty() != -1) {
-
-                                                                                // Remove forSale from Chest
-                                                                                if (i.getAmount() > forSaleAmount) {
-                                                                                    i.setAmount(i.getAmount() - forSaleAmount);
-                                                                                } else {
-                                                                                    chestInventory.setItem(chestInventory.first(i), new ItemStack(Material.AIR));
-                                                                                }
-
-                                                                                // Remove cost from player inventory
-                                                                                if (is.getAmount() > costAmount) {
-                                                                                    is.setAmount(is.getAmount() - costAmount);
-                                                                                } else {
-                                                                                    playerInventory.setItem(playerInventory.first(is), new ItemStack(Material.AIR));
-                                                                                }
-
-                                                                                // Add cost to chest inventory
-                                                                                chestInventory.addItem(new ItemStack(costItem, costAmount));
-
-                                                                                // Add forSale to player inventory
-                                                                                ItemStack newItem = i.clone();
-                                                                                newItem.setAmount(forSaleAmount);
-
-                                                                                playerInventory.addItem(newItem);
-
-                                                                                player.updateInventory();
-                                                                                player.sendMessage(
-                                                                                        ChatColor.translateAlternateColorCodes('&',
-                                                                                                "&aThank you for your business. Come again."));
-                                                                            } else {
-                                                                                //player.getWorld().dropItemNaturally(player.getLocation(), forSaleItem);
-
-                                                                                player.sendMessage(
-                                                                                        ChatColor.translateAlternateColorCodes('&',
-                                                                                                "&cYou do not have any room in your inventory."));
-                                                                            }
-                                                                            break;
-                                                                        }
-                                                                    }
-                                                                } else {
-                                                                    // Chest does not have enough room
-                                                                    //player.getWorld().dropItemNaturally(player.getLocation(), forSaleItem);
-                                                                    player.sendMessage(
-                                                                            ChatColor.translateAlternateColorCodes('&',
-                                                                                    "&cThis shop does not have enough room to accept your purchase."));
-                                                                }
-
-
-                                                                break;
-                                                            }
-                                                        }
-                                                    } else {
-                                                        // Player does not have enough for the cost
-                                                        player.sendMessage(
-                                                                ChatColor.translateAlternateColorCodes('&',
-                                                                        "&cThis shop does not have enough items to sell you."));
-                                                    }
-                                                } else {
-                                                    // Player does not have enough for the cost
-                                                    player.sendMessage(
-                                                            ChatColor.translateAlternateColorCodes('&',
-                                                                    "&cYou do not have enough items to purchase this."));
-                                                }
-                                                break;
-                                            }
-                                        }
-
-                                    event.setCancelled(true);
-
-                                    // Handle amount parse error
-                                } catch (Exception exception) {
-                                }
-                            }
-                        }
-                    }
-            }
+        if (!e.getLine(0).equalsIgnoreCase("[Shop]")) return;
+        if (!e.getLine(2).contains(":") && e.getLine(2).split(":").length == 2) {
+            player.sendMessage(ChatColor.RED + "The sign is formatted incorrectly.");
+            return;
         }
+
+        String[] counts = e.getLine(2).split(":");
+        // Convert to separate values
+        if (!NumberUtils.isParsable(counts[0]) || !NumberUtils.isParsable(counts[1])) {
+            player.sendMessage(ChatColor.RED + "The sign is formatted incorrectly.");
+            return;
+        }
+
+        int itemCount = Integer.parseInt(counts[0]);
+        int currencyCount = Integer.parseInt(counts[1]);
+
+        if (ChestUtils.getChestLocation(e.getBlock().getLocation()) == null) return;
+
+        ShopStorage shopStorage = new ShopStorage(e.getBlock().getLocation());
+        shopStorage.setOwner(player.getUniqueId());
+        shopStorage.setItemCount(itemCount);
+        shopStorage.setCurrencyCount(currencyCount);
+
+        player.sendMessage(ChatColor.AQUA +
+                "" + ChatColor.UNDERLINE +
+                "Please right click the sign with the item you with to sell.");
 
     }
 
-    public boolean inventoryContains(Inventory inventory, Material material, int amount) {
-        List<ItemStack> itemStacks = new ArrayList<>();
-        for (ItemStack itemStackFor : inventory.getContents()) {
-            if (itemStackFor != null)
-                itemStacks.add(itemStackFor);
-        }
-        ItemStack[] inventoryContents = itemStacks.toArray(new ItemStack[itemStacks.size()]);
+    @EventHandler
+    public void shopBreak(BlockBreakEvent e) {
+        Player player = e.getPlayer();
+        Block block = e.getBlock();
+        if (!block.getType().toString().contains("SIGN")) return;
+        Sign sign = (Sign) block.getState();
 
-        for (ItemStack items : inventoryContents) {
-            if (items.getType() == material && items.getAmount() >= amount) {
-                return true;
+        if (!sign.getLine(0).equalsIgnoreCase("[Shop]")) return;
+        if (!ShopStorage.isShop(block.getLocation())) return;
+
+        ShopStorage shopStorage = new ShopStorage(block.getLocation());
+        if (!shopStorage.getOwner().equals(player.getUniqueId()) && !player.isOp()) {
+            player.sendMessage(ChatColor.RED + "You cannot break shops you do not own.");
+            e.setCancelled(true);
+            return;
+        }
+
+        shopStorage.removeShop();
+    }
+
+    @EventHandler
+    public void setupShopItems(PlayerInteractEvent e) throws IOException {
+        Player player = e.getPlayer();
+        Block block = e.getClickedBlock();
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (!block.getType().toString().contains("SIGN")) return;
+        Sign sign = (Sign) block.getState();
+
+        if (!sign.getLine(0).equalsIgnoreCase("[Shop]")) return;
+        if (!ShopStorage.isShop(block.getLocation())) return;
+
+        ShopStorage shopStorage = new ShopStorage((block.getLocation()));
+
+        if (shopStorage.isCurrencyItemSet() && shopStorage.isCurrencyItemSet()) return;
+
+        if (!shopStorage.isOwner(player)) {
+            player.sendMessage(ChatColor.RED + "You cannot setup a shop you do not own.");
+            return;
+        }
+
+        ItemStack itemInHand = player.getInventory().getItemInMainHand().clone();
+        if (emptyMainHand(player)) return;
+
+        String itemName = itemInHand.getItemMeta().hasDisplayName() ?
+                itemInHand.getItemMeta().getDisplayName() : itemInHand.getType().name();
+
+        //check if shop has for sale item set
+        if (!shopStorage.isForSaleItemSet()) {
+            itemInHand.setAmount(1);
+            shopStorage.setForSaleItem(itemInHand);
+
+            sign.setLine(1, itemName);
+            sign.update();
+
+            player.sendMessage(ChatColor.GREEN +
+                    "You have set the shop to sell " + itemName
+                    +
+                    ChatColor.GREEN + ".");
+            if (!shopStorage.isCurrencyItemSet()) {
+                player.sendMessage(ChatColor.LIGHT_PURPLE +
+                        "" + ChatColor.UNDERLINE +
+                        "Please right click the sign with the item you want players to use as currency.");
+            }
+            e.setCancelled(true);
+            return;
+        }
+
+        //check if shop has currency item set
+        if (!shopStorage.isCurrencyItemSet()) {
+            if (emptyMainHand(player)) return;
+            itemInHand.setAmount(1);
+            shopStorage.setCurrencyItem(itemInHand);
+
+            sign.setLine(3, itemName);
+            sign.update();
+
+            player.sendMessage(ChatColor.GREEN +
+                    "You have set the shop to use " + itemName +
+                    ChatColor.GREEN + " as the currency.");
+            player.sendMessage(ChatColor.GREEN +
+                    "" + ChatColor.BOLD + "" +
+                    "Shop has been created!");
+            e.setCancelled(true);
+            return;
+        }
+    }
+
+    @EventHandler
+    public void useShop(PlayerInteractEvent e) {
+        Player player = e.getPlayer();
+        Block block = e.getClickedBlock();
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (!block.getType().toString().contains("SIGN")) return;
+        Sign sign = (Sign) block.getState();
+
+        if (!sign.getLine(0).equalsIgnoreCase("[Shop]")) return;
+        if (!ShopStorage.isShop(block.getLocation())) return;
+
+        ShopStorage shopStorage = new ShopStorage((block.getLocation()));
+
+        if ((!shopStorage.isCurrencyItemSet() || !shopStorage.isCurrencyItemSet()) && shopStorage.isOwner(player))
+            return;
+
+        if (shopStorage.isOwner(player)) {
+            player.sendMessage(ChatColor.RED + "You cannot use your own shop.");
+            return;
+        }
+
+        if ((!shopStorage.isCurrencyItemSet() || !shopStorage.isCurrencyItemSet()) && !shopStorage.isOwner(player)) {
+            player.sendMessage(ChatColor.RED + "This shop has not been setup yet.");
+            return;
+        }
+
+        if (!hasEnoughCurrency(player, shopStorage)) {
+            player.sendMessage(ChatColor.RED + "You do not have enough to purchased this.");
+            return;
+        }
+
+        if (!hasEnoughForSale(shopStorage)) {
+            player.sendMessage(ChatColor.RED + "This shop is out of stock.");
+            return;
+        }
+
+        if (!playerAndShopHaveRoom(player, shopStorage)) {
+            player.sendMessage(ChatColor.RED + "Your inventory OR the shop does not have" +
+                    "enough room to accept the purchase.");
+            return;
+        }
+
+        String itemNameCurrency = shopStorage.getCurrencyItem().getItemMeta().hasDisplayName() ?
+                shopStorage.getCurrencyItem().getItemMeta().getDisplayName() : shopStorage.getCurrencyItem().getType().name();
+        String itemNameForSale = shopStorage.getForSaleItem().getItemMeta().hasDisplayName() ?
+                shopStorage.getForSaleItem().getItemMeta().getDisplayName() : shopStorage.getForSaleItem().getType().name();
+
+        swapItems(player, shopStorage);
+        player.sendMessage(ChatColor.GREEN + "You have purchased " +
+                shopStorage.getItemCount() + "x " + itemNameForSale
+                + ChatColor.GREEN + " for " +
+                shopStorage.getCurrencyCount() + "x " +
+                itemNameCurrency);
+    }
+
+    public void swapItems(Player player, ShopStorage shop) {
+
+        Inventory chestInventory = ChestUtils.getBlockInventory(shop.getBlock());
+        Inventory playerInventory = player.getInventory();
+
+        List<ItemStack> playerCurrency = new ArrayList<>();
+        List<ItemStack> shopItems = new ArrayList<>();
+
+        int currencyAmount = shop.getCurrencyCount();
+
+        Iterator<ItemStack> playerItems = playerInventory.iterator();
+        while (playerItems.hasNext()) {
+            ItemStack item = playerItems.next();
+            if (item != null)
+                if (item.isSimilar(shop.getCurrencyItem())) {
+                    if (item.getAmount() <= currencyAmount) {
+                        currencyAmount -= item.getAmount();
+                        playerCurrency.add(item.clone());
+                        playerInventory.setItem(playerInventory.first(item), new ItemStack(Material.AIR));
+                    } else if (item.getAmount() > currencyAmount) {
+                        ItemStack modified = item.clone();
+                        modified.setAmount(item.getAmount() - currencyAmount);
+
+                        ItemStack itemToPut = item.clone();
+                        itemToPut.setAmount(currencyAmount);
+
+                        currencyAmount = 0;
+                        playerCurrency.add(itemToPut);
+                        playerInventory.setItem(playerInventory.first(item), modified);
+                    }
+
+                    player.updateInventory();
+                }
+        }
+
+        int forSaleAmount = shop.getItemCount();
+
+        for (ItemStack item : chestInventory) {
+            if (item != null)
+                if (item.isSimilar(shop.getForSaleItem())) {
+                    if (item.getAmount() <= forSaleAmount) {
+                        forSaleAmount -= item.getAmount();
+                        shopItems.add(item.clone());
+                        chestInventory.setItem(chestInventory.first(item), new ItemStack(Material.AIR));
+                    } else if (item.getAmount() > forSaleAmount) {
+                        ItemStack modified = item.clone();
+                        modified.setAmount(item.getAmount() - forSaleAmount);
+
+                        ItemStack itemToPut = item.clone();
+                        itemToPut.setAmount(forSaleAmount);
+
+                        forSaleAmount = 0;
+                        shopItems.add(itemToPut.clone());
+                        chestInventory.setItem(chestInventory.first(item), modified);
+                    }
+                }
+        }
+
+        for (ItemStack currency : playerCurrency) {
+            chestInventory.addItem(currency);
+        }
+
+        for (ItemStack purchased : shopItems) {
+            playerInventory.addItem(purchased);
+            player.updateInventory();
+        }
+    }
+
+    public boolean playerAndShopHaveRoom(Player player, ShopStorage shop) {
+        Inventory chestInventory = ChestUtils.getBlockInventory(shop.getBlock());
+        Inventory playerInventory = player.getInventory();
+
+        return chestInventory.firstEmpty() != -1 || playerInventory.firstEmpty() != -1;
+    }
+
+    private boolean hasEnoughForSale(ShopStorage shop) {
+        Inventory inventory = ChestUtils.getBlockInventory(shop.getBlock());
+        int forSaleAmount = 0;
+        List<ItemStack> itemList = new ArrayList<>();
+        for (ItemStack itemStack : inventory.getContents()) {
+            if (itemStack != null)
+                itemList.add(itemStack);
+        }
+
+        ItemStack[] contents = itemList.toArray(new ItemStack[itemList.size()]);
+        for (ItemStack item : contents) {
+            if (item.isSimilar(shop.getForSaleItem())) {
+                forSaleAmount += item.getAmount();
             }
         }
+
+        return forSaleAmount >= shop.getItemCount();
+    }
+
+    private boolean hasEnoughCurrency(Player player, ShopStorage shop) {
+        Inventory inventory = player.getInventory();
+        int currencyAmount = 0;
+        List<ItemStack> itemList = new ArrayList<>();
+        for (ItemStack itemStack : inventory.getContents()) {
+            if (itemStack != null)
+                itemList.add(itemStack);
+        }
+
+        ItemStack[] contents = itemList.toArray(new ItemStack[itemList.size()]);
+        for (ItemStack item : contents) {
+            if (item.isSimilar(shop.getCurrencyItem())) {
+                currencyAmount += item.getAmount();
+            }
+        }
+
+        return currencyAmount >= shop.getCurrencyCount();
+    }
+
+    private boolean emptyMainHand(Player player) {
+        if (player.getInventory().getItemInMainHand() == null) {
+            player.sendMessage(ChatColor.RED + "Please click the sign with the item you wish to use.");
+            return true;
+        }
+
         return false;
     }
 }
